@@ -1,4 +1,4 @@
-// Final Full App.js with Firebase Sync, Login, Logout, and All UI Features
+// Full App.js — All Logic and Full JSX UI (No Summaries)
 
 import React, { useState, useEffect, useRef } from 'react';
 import Settings from './components/Settings';
@@ -7,13 +7,14 @@ import Login from './components/Login';
 import { FaCut, FaClipboardList } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-
 import {
   saveEntriesToFirestore,
   saveClosedDayToFirestore,
   loadEntriesFromFirestore,
   loadHistoryFromFirestore
 } from './firebaseSync';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { db } from './firebase';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
@@ -29,6 +30,7 @@ function App() {
   });
   const [tipOptions, setTipOptions] = useState(() => JSON.parse(localStorage.getItem('tipOptions')) || [3, 4, 5, 10]);
   const [darkMode, setDarkMode] = useState(() => JSON.parse(localStorage.getItem('darkMode')) || false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const [view, setView] = useState('main');
   const [service, setService] = useState('');
@@ -49,25 +51,36 @@ function App() {
       const loadedHistory = await loadHistoryFromFirestore();
       setEntries(loadedEntries);
       setHistory(loadedHistory);
+      setInitialLoadDone(true);
     }
     loadData();
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('entries', JSON.stringify(entries));
+    if (initialLoadDone) {
+      localStorage.setItem('entries', JSON.stringify(entries));
+      saveEntriesToFirestore(entries);
+    }
+  }, [entries, initialLoadDone]);
+
+  useEffect(() => {
     localStorage.setItem('services', JSON.stringify(serviceList));
     localStorage.setItem('tipOptions', JSON.stringify(tipOptions));
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
-    saveEntriesToFirestore(entries);
-  }, [entries, serviceList, tipOptions, darkMode]);
-
-  if (!isLoggedIn) return <Login setIsLoggedIn={setIsLoggedIn} />;
-  if (view === 'history') return <History history={history} setView={setView} darkMode={darkMode} />;
-  if (view === 'settings') return <Settings setView={setView} tipOptions={tipOptions} setTipOptions={setTipOptions} serviceList={serviceList} setServiceList={setServiceList} darkMode={darkMode} setDarkMode={setDarkMode} />;
+  }, [serviceList, tipOptions, darkMode]);
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     setIsLoggedIn(false);
+  };
+
+  const handleDeleteDay = async (date) => {
+    const confirm = window.confirm(`Are you sure you want to delete the record for ${date}?`);
+    if (!confirm) return;
+    const updated = history.filter(day => day.date !== date);
+    setHistory(updated);
+    localStorage.setItem('history', JSON.stringify(updated));
+    await deleteDoc(doc(db, 'history', date));
   };
 
   const handleAddEntry = () => {
@@ -143,9 +156,13 @@ function App() {
     highlight: '#3b82f6'
   };
 
+  if (!isLoggedIn) return <Login setIsLoggedIn={setIsLoggedIn} />;
+  if (view === 'history') return <History history={history} setHistory={setHistory} handleDeleteDay={handleDeleteDay} setView={setView} darkMode={darkMode} />;
+  if (view === 'settings') return <Settings setView={setView} tipOptions={tipOptions} setTipOptions={setTipOptions} serviceList={serviceList} setServiceList={setServiceList} darkMode={darkMode} setDarkMode={setDarkMode} />;
+
   return (
     <div style={{ backgroundColor: theme.background, color: theme.text, minHeight: '100vh', padding: 20, fontFamily: 'Helvetica Neue, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <FaCut size={28} color={theme.primary} />
@@ -163,7 +180,7 @@ function App() {
             </div>
           )}
         </div>
-      </div>
+      </header>
 
       <div style={{ marginTop: 30 }}>
         <button onClick={() => setShowSummary(!showSummary)} style={{ backgroundColor: theme.secondary, color: '#fff', padding: 10, borderRadius: 10, border: 'none', cursor: 'pointer' }}>See Today's Summary</button>
