@@ -1,7 +1,10 @@
+// firebaseSync.js — Full working version with refresh fix
+
 import { db } from './firebase';
 import {
   collection,
   getDocs,
+  getDoc,
   setDoc,
   doc
 } from 'firebase/firestore';
@@ -26,13 +29,13 @@ export async function saveClosedDayToFirestore(date, note, entries) {
 // Load entries for today
 export async function loadEntriesFromFirestore() {
   const today = new Date().toLocaleDateString();
-  const snapshot = await getDocs(collection(db, 'entries'));
-  const todayDoc = snapshot.docs.find(doc => doc.id === today);
-  return todayDoc?.data()?.entries || [];
+  const docRef = doc(db, 'entries', today);
+  const snapshot = await getDoc(docRef);
+  return snapshot.exists() ? snapshot.data().entries || [] : [];
 }
 
 // Load entire history collection
 export async function loadHistoryFromFirestore() {
   const snapshot = await getDocs(collection(db, 'history'));
   return snapshot.docs.map(doc => doc.data());
-}
+}  
