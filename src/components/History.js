@@ -20,7 +20,6 @@ function History({ history, setView, darkMode }) {
     const updatedHistory = history.filter(day => day.date !== date);
     localStorage.setItem('history', JSON.stringify(updatedHistory));
     await deleteDoc(doc(db, 'history', date));
-    setHistory(updatedHistory); // ✅ This keeps the UI in sync
   };  
 
   return (
