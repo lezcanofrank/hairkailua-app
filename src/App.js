@@ -166,7 +166,7 @@ function App() {
         <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <FaCut size={28} color={theme.primary} />
-            <h1 style={{ fontSize: 26, fontWeight: 'bold', margin: 0 }}>Hair Kailua Ticket Logger</h1>
+            <h1 style={{ fontSize: 26, fontWeight: 'bold', margin: 0 }}>Hair Kailua Ticket Logger lol</h1>
             <FaClipboardList size={24} color={theme.primary} />
           </div>
         </div>
