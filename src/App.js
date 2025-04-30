@@ -1,4 +1,4 @@
-// Full App.js — All functionality restored with full JSX and Firebase sync
+// Full App.js — Complete version with full JSX and history refresh fix
 
 import React, { useState, useEffect, useRef } from 'react';
 import Settings from './components/Settings';
@@ -19,7 +19,7 @@ import { db } from './firebase';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [entries, setEntries] = useState([]);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('history')) || []);
   const [serviceList, setServiceList] = useState(() => JSON.parse(localStorage.getItem('services')) || {
     "Basic Military Haircut": 18,
     "Lined Up Military Haircut": 20,
@@ -51,6 +51,8 @@ function App() {
       const loadedHistory = await loadHistoryFromFirestore();
       setEntries(loadedEntries);
       setHistory(loadedHistory);
+      localStorage.setItem('entries', JSON.stringify(loadedEntries));
+      localStorage.setItem('history', JSON.stringify(loadedHistory));
       setInitialLoadDone(true);
     }
     loadData();
